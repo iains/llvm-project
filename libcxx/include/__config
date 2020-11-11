@@ -1253,7 +1253,10 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 #define _LIBCPP_HAS_NO_IS_AGGREGATE
 #endif
 
-#if !defined(__cpp_coroutines) || __cpp_coroutines < 201703L
+#if defined(__clang__) && (!defined(__cpp_coroutine) || \
+                           __cpp_coroutine < 201703L)
+#define _LIBCPP_HAS_NO_COROUTINES
+#elif !defined(__cpp_impl_coroutine) || __cpp_impl_coroutine < 201703L
 #define _LIBCPP_HAS_NO_COROUTINES
 #endif
 

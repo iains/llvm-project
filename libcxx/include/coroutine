@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_EXPERIMENTAL_COROUTINE
-#define _LIBCPP_EXPERIMENTAL_COROUTINE
+#ifndef _LIBCPP_COROUTINE
+#define _LIBCPP_COROUTINE
 
 /**
     experimental/coroutine synopsis
@@ -16,8 +16,7 @@
 // C++next
 
 namespace std {
-namespace experimental {
-inline namespace coroutines_v1 {
+inline namespace __coro20 {
 
   // 18.11.1 coroutine traits
 template <typename R, typename... ArgTypes>
@@ -39,24 +38,20 @@ struct suspend_always;
 template <class T> struct hash;
 template <class P> struct hash<coroutine_handle<P>>;
 
-} // namespace coroutines_v1
-} // namespace experimental
+} // namespace __coro20
 } // namespace std
 
  */
 
-#include <experimental/__config>
+#include <__config>
 
 #if defined(_LIBCPP_COMPILER_GCC)
-# error GCC should include <coroutine> not <experimental/coroutine>
-#else
 
 #include <new>
 #include <type_traits>
 #include <functional>
 #include <memory> // for hash<T*>
 #include <cstddef>
-#include <cassert>
 #include <__debug>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
@@ -73,7 +68,8 @@ template <class P> struct hash<coroutine_handle<P>>;
 
 #ifndef _LIBCPP_HAS_NO_COROUTINES
 
-_LIBCPP_BEGIN_NAMESPACE_EXPERIMENTAL_COROUTINES
+_LIBCPP_BEGIN_NAMESPACE_STD
+inline namespace __coro20 {
 
 template <class _Tp, class = void>
 struct __coroutine_traits_sfinae {};
@@ -143,6 +139,7 @@ public:
 
 public:
     _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_CONSTEXPR
     static coroutine_handle from_address(void* __addr) _NOEXCEPT {
         coroutine_handle __tmp;
         __tmp.__handle_ = __addr;
@@ -151,6 +148,7 @@ public:
 
     // FIXME: Should from_address(nullptr) be allowed?
     _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_CONSTEXPR
     static coroutine_handle from_address(nullptr_t) _NOEXCEPT {
       return coroutine_handle(nullptr);
     }
@@ -223,6 +221,7 @@ public:
 
 public:
     _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_CONSTEXPR
     static coroutine_handle from_address(void* __addr) _NOEXCEPT {
         coroutine_handle __tmp;
         __tmp.__handle_ = __addr;
@@ -234,6 +233,7 @@ public:
     // ambiguous.
     // FIXME: should from_address work with nullptr?
     _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_CONSTEXPR
     static coroutine_handle from_address(nullptr_t) _NOEXCEPT {
       return coroutine_handle(nullptr);
     }
@@ -301,6 +301,71 @@ inline _LIBCPP_INLINE_VISIBILITY
 noop_coroutine_handle noop_coroutine() _NOEXCEPT {
   return noop_coroutine_handle();
 }
+#else
+  /// [coroutine.noop]
+  struct noop_coroutine_promise
+  {
+  };
+
+  // 17.12.4.1 Class noop_coroutine_promise
+  /// [coroutine.promise.noop]
+  template <>
+    struct coroutine_handle<noop_coroutine_promise>
+    {
+      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+      // 3460. Unimplementable noop_coroutine_handle guarantees
+      // [coroutine.handle.noop.conv], conversion
+      _LIBCPP_CONSTEXPR operator coroutine_handle<>() const _NOEXCEPT
+      { return coroutine_handle<>::from_address(address()); }
+
+      // [coroutine.handle.noop.observers], observers
+      _LIBCPP_CONSTEXPR explicit operator bool() const _NOEXCEPT { return true; }
+
+      _LIBCPP_CONSTEXPR bool done() const _NOEXCEPT { return false; }
+
+      // [coroutine.handle.noop.resumption], resumption
+      void operator()() const _NOEXCEPT {}
+
+      void resume() const noexcept {}
+
+      void destroy() const noexcept {}
+
+      // [coroutine.handle.noop.promise], promise access
+      noop_coroutine_promise& promise() const noexcept
+      { return _S_fr.__p; }
+
+      // [coroutine.handle.noop.address], address
+      _LIBCPP_CONSTEXPR void* address() const noexcept { return _M_fr_ptr; }
+
+    private:
+      friend coroutine_handle noop_coroutine() _NOEXCEPT;
+
+      struct __frame
+      {
+	static void __dummy_resume_destroy() { }
+
+	void (*__r)() = __dummy_resume_destroy;
+	void (*__d)() = __dummy_resume_destroy;
+	struct noop_coroutine_promise __p;
+      };
+
+      static __frame _S_fr;
+
+      explicit coroutine_handle() noexcept = default;
+
+      void* _M_fr_ptr = &_S_fr;
+    };
+
+  using noop_coroutine_handle = coroutine_handle<noop_coroutine_promise>;
+
+  inline noop_coroutine_handle::__frame
+  noop_coroutine_handle::_S_fr{};
+
+  inline noop_coroutine_handle noop_coroutine() _NOEXCEPT
+  {
+    return noop_coroutine_handle();
+  }
+
 #endif // __has_builtin(__builtin_coro_noop)
 
 struct suspend_never {
@@ -321,13 +386,11 @@ struct suspend_always {
   void await_resume() const _NOEXCEPT {}
 };
 
-_LIBCPP_END_NAMESPACE_EXPERIMENTAL_COROUTINES
-
-_LIBCPP_BEGIN_NAMESPACE_STD
+} // __coro20
 
 template <class _Tp>
-struct hash<_VSTD_CORO::coroutine_handle<_Tp> > {
-    using __arg_type = _VSTD_CORO::coroutine_handle<_Tp>;
+struct hash<_VSTD::__coro20::coroutine_handle<_Tp> > {
+    using __arg_type = _VSTD::__coro20::coroutine_handle<_Tp>;
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(__arg_type const& __v) const _NOEXCEPT
     {return hash<void*>()(__v.address());}
@@ -337,6 +400,10 @@ _LIBCPP_END_NAMESPACE_STD
 
 #endif // !defined(_LIBCPP_HAS_NO_COROUTINES)
 
-#endif // check for which compiler.
+#else // the compiler doesn't support this header.
 
-#endif /* _LIBCPP_EXPERIMENTAL_COROUTINE */
+#error this compiler should use <experimental/coroutine>
+
+#endif
+
+#endif /* _LIBCPP_COROUTINE */
