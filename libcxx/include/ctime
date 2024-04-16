@@ -60,13 +60,24 @@ int timespec_get( struct timespec *ts, int base); // C++17
 #  pragma GCC system_header
 #endif
 
+// Older Apple SDKs don't define ::timespec_get unconditionally in C++ mode.
+// Note that we're detecting this here instead of in <__config> because we
+// can't include system headers from <__config>, since it leads to circular
+// module dependencies.
+#if defined(__APPLE__) && !__has_attribute(using_if_exists)
+#   include <sys/cdefs.h>
+#   if defined(_LIBCPP_HAS_TIMESPEC_GET) && (__DARWIN_C_LEVEL < __DARWIN_C_FULL)
+#       define _LIBCPP_HAS_TIMESPEC_GET_NOT_ACTUALLY_PROVIDED
+#   endif
+#endif
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 using ::clock_t _LIBCPP_USING_IF_EXISTS;
 using ::size_t _LIBCPP_USING_IF_EXISTS;
 using ::time_t _LIBCPP_USING_IF_EXISTS;
 using ::tm _LIBCPP_USING_IF_EXISTS;
-#if _LIBCPP_STD_VER >= 17
+#if _LIBCPP_STD_VER >= 17 && defined(_LIBCPP_HAS_TIMESPEC_GET)
 using ::timespec _LIBCPP_USING_IF_EXISTS;
 #endif
 using ::clock _LIBCPP_USING_IF_EXISTS;
@@ -78,7 +89,8 @@ using ::ctime _LIBCPP_USING_IF_EXISTS;
 using ::gmtime _LIBCPP_USING_IF_EXISTS;
 using ::localtime _LIBCPP_USING_IF_EXISTS;
 using ::strftime _LIBCPP_USING_IF_EXISTS;
-#if _LIBCPP_STD_VER >= 17
+#if _LIBCPP_STD_VER >= 17 && defined(_LIBCPP_HAS_TIMESPEC_GET) && \
+    !defined(_LIBCPP_HAS_TIMESPEC_GET_NOT_ACTUALLY_PROVIDED)
 using ::timespec_get _LIBCPP_USING_IF_EXISTS;
 #endif
 

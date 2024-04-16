@@ -140,11 +140,11 @@ using ::mbtowc _LIBCPP_USING_IF_EXISTS;
 using ::wctomb _LIBCPP_USING_IF_EXISTS;
 using ::mbstowcs _LIBCPP_USING_IF_EXISTS;
 using ::wcstombs _LIBCPP_USING_IF_EXISTS;
-#if !defined(_LIBCPP_CXX03_LANG)
+#if !defined(_LIBCPP_CXX03_LANG) && defined(_LIBCPP_HAS_QUICK_EXIT)
 using ::at_quick_exit _LIBCPP_USING_IF_EXISTS;
 using ::quick_exit _LIBCPP_USING_IF_EXISTS;
 #endif
-#if _LIBCPP_STD_VER >= 17
+#if _LIBCPP_STD_VER >= 17 && defined(_LIBCPP_HAS_ALIGNED_ALLOC)
 using ::aligned_alloc _LIBCPP_USING_IF_EXISTS;
 #endif
 

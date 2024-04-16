@@ -877,8 +877,24 @@ _LIBCPP_BEGIN_NAMESPACE_STD _LIBCPP_END_NAMESPACE_STD
 
 #  if __has_attribute(__using_if_exists__)
 #    define _LIBCPP_USING_IF_EXISTS __attribute__((__using_if_exists__))
+#    define _LIBCPP_HAS_TIMESPEC_GET
+#    define _LIBCPP_HAS_QUICK_EXIT
+#    define _LIBCPP_HAS_ALIGNED_ALLOC
 #  else
 #    define _LIBCPP_USING_IF_EXISTS
+     // We need to account for Apple platform missing interfaces when the
+     // compiler does not support __using_if_exists__.
+#    if defined(__APPLE__)
+       // timespec_get and aligned_alloc were introduced in macOS 10.15 and
+       // aligned releases
+#      if ((defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 101500) || \
+           (defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__) && __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ >= 130000) || \
+           (defined(__ENVIRONMENT_TV_OS_VERSION_MIN_REQUIRED__) && __ENVIRONMENT_TV_OS_VERSION_MIN_REQUIRED__ >= 130000) || \
+           (defined(__ENVIRONMENT_WATCH_OS_VERSION_MIN_REQUIRED__) && __ENVIRONMENT_WATCH_OS_VERSION_MIN_REQUIRED__ >= 60000))
+#        define _LIBCPP_HAS_ALIGNED_ALLOC
+#        define _LIBCPP_HAS_TIMESPEC_GET
+#      endif
+#    endif // __APPLE__
 #  endif
 
 #  ifdef _LIBCPP_CXX03_LANG
