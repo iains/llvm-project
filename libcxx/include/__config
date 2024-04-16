@@ -648,6 +648,11 @@ typedef __char32_t char32_t;
 
 #  elif defined(_LIBCPP_COMPILER_GCC)
 
+#    if defined(__APPLE__) && defined(__aarch64__) && __GNUC__ >= 10
+// The old layout does not appear to be supported here.
+#        define _LIBCPP_ABI_ALTERNATE_STRING_LAYOUT
+#    endif
+
 #    if !defined(__SANITIZE_ADDRESS__)
 #      define _LIBCPP_HAS_NO_ASAN
 #    endif
